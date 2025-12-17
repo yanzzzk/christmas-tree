@@ -74,7 +74,7 @@ export function CameraDebug({ enabled }: CameraDebugProps) {
         </div>
         <video
           ref={videoRef}
-          className="w-40 h-30 bg-black"
+          className="w-24 h-18 sm:w-32 sm:h-24 md:w-40 md:h-30 bg-black"
           playsInline
           muted
           style={{ transform: 'scaleX(-1)' }}
