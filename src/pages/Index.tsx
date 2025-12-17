@@ -1,10 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
-import { ChristmasScene, TreeStyle } from '@/components/christmas/Scene';
+import { ChristmasScene } from '@/components/christmas/Scene';
 import { GestureIndicator } from '@/components/christmas/GestureIndicator';
 import { AudioControl } from '@/components/christmas/AudioControl';
 import { PhotoUpload } from '@/components/christmas/PhotoUpload';
 import { InstructionsOverlay } from '@/components/christmas/InstructionsOverlay';
-import { TreeStyleSelector } from '@/components/christmas/TreeStyleSelector';
 import { useHandGesture } from '@/hooks/useHandGesture';
 import { useMouseFallback } from '@/hooks/useMouseFallback';
 import { useChristmasAudio } from '@/hooks/useChristmasAudio';
@@ -12,11 +11,10 @@ import { TreeState, GestureType } from '@/types/christmas';
 
 const Index = () => {
   const [treeState, setTreeState] = useState<TreeState>('tree');
-  const [treeStyle, setTreeStyle] = useState<TreeStyle>('kline'); // K-line first!
   const [photos, setPhotos] = useState<string[]>([]);
   const [focusedPhotoIndex, setFocusedPhotoIndex] = useState<number | null>(null);
   const [orbitRotation, setOrbitRotation] = useState({ x: 0, y: 0 });
-  const [gestureEnabled, setGestureEnabled] = useState(false);
+  const [gestureEnabled, setGestureEnabled] = useState(false); // Start disabled, user can enable
   const [showInstructions, setShowInstructions] = useState(true);
 
   // Audio hook
@@ -88,7 +86,6 @@ const Index = () => {
         focusedPhotoIndex={focusedPhotoIndex}
         orbitRotation={orbitRotation}
         handPosition={handGesture.isTracking ? handGesture.handPosition : null}
-        treeStyle={treeStyle}
       />
 
       {/* UI Overlays */}
@@ -116,9 +113,6 @@ const Index = () => {
       {showInstructions && (
         <InstructionsOverlay onDismiss={handleDismissInstructions} />
       )}
-
-      {/* Tree Style Selector */}
-      <TreeStyleSelector treeStyle={treeStyle} onStyleChange={setTreeStyle} />
 
       {/* State indicator */}
       <div className="absolute top-4 right-4 z-10">
