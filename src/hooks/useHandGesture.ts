@@ -13,6 +13,8 @@ export function useHandGesture({ enabled, onGestureChange }: UseHandGestureOptio
     pinchDistance: 1,
     isTracking: false,
   });
+  const [cameraPermission, setCameraPermission] = useState<'pending' | 'granted' | 'denied' | 'prompt'>('prompt');
+  const [isInitializing, setIsInitializing] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const handsRef = useRef<any>(null);
@@ -99,12 +101,13 @@ export function useHandGesture({ enabled, onGestureChange }: UseHandGestureOptio
         onGestureChange?.(gesture);
       }
 
-      setState({
+      setState(prev => ({
+        ...prev,
         gesture,
         handPosition,
         pinchDistance,
         isTracking: true,
-      });
+      }));
     } else {
       setState(prev => ({
         ...prev,
@@ -114,64 +117,82 @@ export function useHandGesture({ enabled, onGestureChange }: UseHandGestureOptio
     }
   }, [detectGesture, calculateFingerDistance, onGestureChange]);
 
-  useEffect(() => {
-    if (!enabled) return;
+  const requestCameraPermission = useCallback(async () => {
+    if (isInitializing) return;
+    
+    setIsInitializing(true);
+    setCameraPermission('pending');
 
-    let mounted = true;
-
-    const initMediaPipe = async () => {
-      try {
-        // Dynamically import MediaPipe
-        const { Hands } = await import('@mediapipe/hands');
-        const { Camera } = await import('@mediapipe/camera_utils');
-
-        if (!mounted) return;
-
-        // Create video element
-        const video = document.createElement('video');
-        video.style.display = 'none';
-        document.body.appendChild(video);
-        videoRef.current = video;
-
-        // Initialize Hands
-        const hands = new Hands({
-          locateFile: (file) => {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-          },
-        });
-
-        hands.setOptions({
-          maxNumHands: 1,
-          modelComplexity: 1,
-          minDetectionConfidence: 0.7,
-          minTrackingConfidence: 0.5,
-        });
-
-        hands.onResults(onResults);
-        handsRef.current = hands;
-
-        // Initialize camera
-        const camera = new Camera(video, {
-          onFrame: async () => {
-            if (handsRef.current && videoRef.current) {
-              await handsRef.current.send({ image: videoRef.current });
-            }
-          },
-          width: 640,
+    try {
+      // First, explicitly request camera permission
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          width: 640, 
           height: 480,
-        });
+          facingMode: 'user'
+        } 
+      });
+      
+      // Permission granted, stop the test stream
+      stream.getTracks().forEach(track => track.stop());
+      
+      setCameraPermission('granted');
+      
+      // Now initialize MediaPipe
+      const { Hands } = await import('@mediapipe/hands');
+      const { Camera } = await import('@mediapipe/camera_utils');
 
-        cameraRef.current = camera;
-        await camera.start();
-      } catch (error) {
-        console.warn('MediaPipe initialization failed, using mouse fallback:', error);
-      }
-    };
+      // Create video element
+      const video = document.createElement('video');
+      video.style.display = 'none';
+      video.playsInline = true;
+      video.muted = true;
+      document.body.appendChild(video);
+      videoRef.current = video;
 
-    initMediaPipe();
+      // Initialize Hands
+      const hands = new Hands({
+        locateFile: (file) => {
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+        },
+      });
 
+      hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.5,
+      });
+
+      hands.onResults(onResults);
+      handsRef.current = hands;
+
+      // Initialize camera
+      const camera = new Camera(video, {
+        onFrame: async () => {
+          if (handsRef.current && videoRef.current) {
+            await handsRef.current.send({ image: videoRef.current });
+          }
+        },
+        width: 640,
+        height: 480,
+      });
+
+      cameraRef.current = camera;
+      await camera.start();
+      
+      console.log('Camera and MediaPipe initialized successfully');
+    } catch (error) {
+      console.warn('Camera permission denied or MediaPipe failed:', error);
+      setCameraPermission('denied');
+    } finally {
+      setIsInitializing(false);
+    }
+  }, [isInitializing, onResults]);
+
+  // Cleanup on unmount
+  useEffect(() => {
     return () => {
-      mounted = false;
       if (cameraRef.current) {
         cameraRef.current.stop();
       }
@@ -179,7 +200,12 @@ export function useHandGesture({ enabled, onGestureChange }: UseHandGestureOptio
         videoRef.current.remove();
       }
     };
-  }, [enabled, onResults]);
+  }, []);
 
-  return state;
+  return {
+    ...state,
+    cameraPermission,
+    isInitializing,
+    requestCameraPermission,
+  };
 }
