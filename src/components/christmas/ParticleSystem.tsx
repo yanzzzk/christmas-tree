@@ -52,21 +52,23 @@ export function ParticleSystem({ state, particleCount = 2500 }: ParticleSystemPr
       const treePos = generateTreePosition(i, particleCount);
       const galaxyPos = generateGalaxyPosition();
       
-      // Christmas color distribution: 40% green, 30% gold, 20% red, 10% white/snow
+// Classic Red & Green Christmas: 45% green, 40% red, 10% gold highlights, 5% white
       const colorRand = Math.random();
       let color: THREE.Color;
-      if (colorRand < 0.4) {
-        // Rich Christmas green
-        color = new THREE.Color().setHSL(0.36, 0.8 + Math.random() * 0.2, 0.35 + Math.random() * 0.15);
-      } else if (colorRand < 0.7) {
-        // Bright gold/yellow
-        color = new THREE.Color().setHSL(0.12, 0.9 + Math.random() * 0.1, 0.55 + Math.random() * 0.15);
-      } else if (colorRand < 0.9) {
-        // Vibrant Christmas red
-        color = new THREE.Color().setHSL(0, 0.85 + Math.random() * 0.15, 0.5 + Math.random() * 0.1);
+      if (colorRand < 0.45) {
+        // Deep emerald to lime green spectrum
+        const hue = 0.33 + Math.random() * 0.08; // 0.33-0.41 green range
+        color = new THREE.Color().setHSL(hue, 0.9 + Math.random() * 0.1, 0.4 + Math.random() * 0.2);
+      } else if (colorRand < 0.85) {
+        // Rich Christmas red spectrum
+        const hue = Math.random() < 0.5 ? 0 : 0.98 + Math.random() * 0.02; // Red hues
+        color = new THREE.Color().setHSL(hue, 0.95 + Math.random() * 0.05, 0.45 + Math.random() * 0.15);
+      } else if (colorRand < 0.95) {
+        // Sparkling gold highlights
+        color = new THREE.Color().setHSL(0.12 + Math.random() * 0.03, 1, 0.6 + Math.random() * 0.15);
       } else {
-        // Snow white with slight warm tint
-        color = new THREE.Color().setHSL(0.1, 0.1 + Math.random() * 0.1, 0.9 + Math.random() * 0.1);
+        // Twinkling white stars
+        color = new THREE.Color().setHSL(0, 0, 0.95 + Math.random() * 0.05);
       }
       
       return {
@@ -141,12 +143,13 @@ export function ParticleSystem({ state, particleCount = 2500 }: ParticleSystemPr
 
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, particleCount]}>
-      <sphereGeometry args={[1, 8, 8]} />
+      <sphereGeometry args={[1, 12, 12]} />
       <meshStandardMaterial
-        metalness={0.6}
-        roughness={0.3}
-        emissive={new THREE.Color('#ffcc66')}
-        emissiveIntensity={0.5}
+        metalness={0.3}
+        roughness={0.2}
+        emissive={new THREE.Color('#ff4444')}
+        emissiveIntensity={0.8}
+        toneMapped={false}
       />
     </instancedMesh>
   );

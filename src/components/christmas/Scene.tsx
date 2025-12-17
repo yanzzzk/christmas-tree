@@ -84,10 +84,11 @@ function SceneContent({
         color="#fff5e6"
       />
       
-      {/* Colored accent lights */}
-      <pointLight position={[-5, 3, -5]} intensity={0.5} color="#ff6b6b" />
-      <pointLight position={[5, 3, 5]} intensity={0.5} color="#ffd700" />
-      <pointLight position={[0, -2, 0]} intensity={0.3} color="#4ade80" />
+      {/* Colored accent lights - red and green theme */}
+      <pointLight position={[-5, 3, -5]} intensity={0.8} color="#ff2222" />
+      <pointLight position={[5, 3, 5]} intensity={0.8} color="#22ff44" />
+      <pointLight position={[0, 6, 0]} intensity={0.6} color="#ffdd00" />
+      <pointLight position={[0, -2, 0]} intensity={0.4} color="#00ff66" />
       
       {/* Background stars */}
       <Stars 
@@ -113,16 +114,17 @@ function SceneContent({
       {/* Tree star topper */}
       <TreeStar state={state} />
       
-      {/* Post-processing effects */}
+      {/* Post-processing effects - enhanced glow */}
       <EffectComposer>
         <Bloom 
-          luminanceThreshold={0.2}
-          luminanceSmoothing={0.9}
-          intensity={1.5}
+          luminanceThreshold={0.1}
+          luminanceSmoothing={0.5}
+          intensity={2.5}
+          mipmapBlur
         />
         <Vignette
-          offset={0.3}
-          darkness={0.7}
+          offset={0.2}
+          darkness={0.6}
         />
       </EffectComposer>
     </>
