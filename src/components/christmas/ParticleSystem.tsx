@@ -52,15 +52,21 @@ export function ParticleSystem({ state, particleCount = 2500 }: ParticleSystemPr
       const treePos = generateTreePosition(i, particleCount);
       const galaxyPos = generateGalaxyPosition();
       
-      // Color distribution: 60% green, 25% gold, 15% red
+      // Christmas color distribution: 40% green, 30% gold, 20% red, 10% white/snow
       const colorRand = Math.random();
       let color: THREE.Color;
-      if (colorRand < 0.6) {
-        color = new THREE.Color().setHSL(0.36, 0.5 + Math.random() * 0.3, 0.25 + Math.random() * 0.15);
-      } else if (colorRand < 0.85) {
-        color = new THREE.Color().setHSL(0.125, 0.8 + Math.random() * 0.2, 0.5 + Math.random() * 0.1);
+      if (colorRand < 0.4) {
+        // Rich Christmas green
+        color = new THREE.Color().setHSL(0.36, 0.8 + Math.random() * 0.2, 0.35 + Math.random() * 0.15);
+      } else if (colorRand < 0.7) {
+        // Bright gold/yellow
+        color = new THREE.Color().setHSL(0.12, 0.9 + Math.random() * 0.1, 0.55 + Math.random() * 0.15);
+      } else if (colorRand < 0.9) {
+        // Vibrant Christmas red
+        color = new THREE.Color().setHSL(0, 0.85 + Math.random() * 0.15, 0.5 + Math.random() * 0.1);
       } else {
-        color = new THREE.Color().setHSL(0, 0.7 + Math.random() * 0.2, 0.4 + Math.random() * 0.1);
+        // Snow white with slight warm tint
+        color = new THREE.Color().setHSL(0.1, 0.1 + Math.random() * 0.1, 0.9 + Math.random() * 0.1);
       }
       
       return {
@@ -137,10 +143,10 @@ export function ParticleSystem({ state, particleCount = 2500 }: ParticleSystemPr
     <instancedMesh ref={meshRef} args={[undefined, undefined, particleCount]}>
       <sphereGeometry args={[1, 8, 8]} />
       <meshStandardMaterial
-        metalness={0.8}
-        roughness={0.2}
-        emissive={new THREE.Color('#ffffff')}
-        emissiveIntensity={0.3}
+        metalness={0.6}
+        roughness={0.3}
+        emissive={new THREE.Color('#ffcc66')}
+        emissiveIntensity={0.5}
       />
     </instancedMesh>
   );
