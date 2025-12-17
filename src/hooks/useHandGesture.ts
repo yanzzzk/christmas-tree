@@ -132,10 +132,32 @@ export function useHandGesture({ enabled, onGestureChange }: UseHandGestureOptio
         setStatus('loading-mediapipe');
         console.log('[Gesture] Starting MediaPipe initialization...');
         
-        // Dynamically import MediaPipe (only Hands, not Camera)
-        const { Hands } = await import('@mediapipe/hands');
+        // Load MediaPipe Hands from CDN via script tag to avoid bundling issues
+        const loadScript = (src: string): Promise<void> => {
+          return new Promise((resolve, reject) => {
+            if (document.querySelector(`script[src="${src}"]`)) {
+              resolve();
+              return;
+            }
+            const script = document.createElement('script');
+            script.src = src;
+            script.crossOrigin = 'anonymous';
+            script.onload = () => resolve();
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+        };
+
+        // Load MediaPipe Hands library from CDN
+        await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js');
 
         if (!mounted) return;
+
+        // Access the global Hands class
+        const Hands = (window as any).Hands;
+        if (!Hands) {
+          throw new Error('MediaPipe Hands not loaded');
+        }
 
         // Request camera access
         setStatus('requesting-camera');
@@ -169,7 +191,7 @@ export function useHandGesture({ enabled, onGestureChange }: UseHandGestureOptio
 
         // Initialize Hands
         const hands = new Hands({
-          locateFile: (file) => {
+          locateFile: (file: string) => {
             return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
           },
         });
