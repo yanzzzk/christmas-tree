@@ -62,15 +62,26 @@ export function ParticleSystem({ state, particleCount = 4000 }: ParticleSystemPr
       const treePos = generateTreePosition(i, particleCount);
       const galaxyPos = generateGalaxyPosition();
       
-      // 85% green, 15% white sparkles
+      // 50% green, 35% red, 10% gold, 5% white
       const colorRand = Math.random();
       let color: THREE.Color;
-      if (colorRand < 0.85) {
+      if (colorRand < 0.50) {
+        // Deep emerald/lime green
         const hue = 0.33 + Math.random() * 0.05;
         const saturation = 0.7 + Math.random() * 0.3;
-        const lightness = 0.3 + Math.random() * 0.2;
+        const lightness = 0.25 + Math.random() * 0.2;
         color = new THREE.Color().setHSL(hue, saturation, lightness);
+      } else if (colorRand < 0.85) {
+        // Christmas red
+        const hue = 0.0 + Math.random() * 0.02;
+        const saturation = 0.8 + Math.random() * 0.2;
+        const lightness = 0.4 + Math.random() * 0.15;
+        color = new THREE.Color().setHSL(hue, saturation, lightness);
+      } else if (colorRand < 0.95) {
+        // Gold highlights
+        color = new THREE.Color().setHSL(0.12 + Math.random() * 0.03, 0.9, 0.5 + Math.random() * 0.1);
       } else {
+        // White/snow accents
         color = new THREE.Color(0.95, 0.95, 0.95);
       }
       
