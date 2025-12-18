@@ -119,6 +119,7 @@ interface CardData {
   scale: number;
   scaleVelocity: number;
   texture: THREE.Texture | null;
+  textureUrl: string; // Track URL to detect changes
   time: number;
 }
 
@@ -146,6 +147,9 @@ export function PhotoCards({ state, photos, focusedIndex }: PhotoCardsProps) {
     
     cardDataRef.current = photoData.map((photo, i) => {
       const existing = cardDataRef.current[i];
+      // Check if URL changed - need to reload texture
+      const urlChanged = existing?.textureUrl !== photo.url;
+      
       const data: CardData = {
         treePosition: photo.treePosition,
         galaxyPosition: photo.galaxyPosition,
@@ -153,11 +157,12 @@ export function PhotoCards({ state, photos, focusedIndex }: PhotoCardsProps) {
         velocity: existing?.velocity || new THREE.Vector3(0, 0, 0),
         scale: existing?.scale || 0.4,
         scaleVelocity: existing?.scaleVelocity || 0,
-        texture: existing?.texture || null,
+        texture: urlChanged ? null : (existing?.texture || null), // Reset if URL changed
+        textureUrl: photo.url,
         time: existing?.time || Math.random() * Math.PI * 2,
       };
       
-      // Load texture if not already loaded
+      // Load texture if not loaded or URL changed
       if (!data.texture) {
         loader.load(
           photo.url,
@@ -167,6 +172,7 @@ export function PhotoCards({ state, photos, focusedIndex }: PhotoCardsProps) {
             tex.colorSpace = THREE.SRGBColorSpace;
             if (cardDataRef.current[i]) {
               cardDataRef.current[i].texture = tex;
+              cardDataRef.current[i].textureUrl = photo.url;
             }
           },
           undefined,
