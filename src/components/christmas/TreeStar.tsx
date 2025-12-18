@@ -77,8 +77,12 @@ export function TreeStar({ state }: TreeStarProps) {
         rotation={[Math.PI / 4, 0.3, 0]}
         position={[0, 0, 0]}
       >
-        <meshBasicMaterial
-          color="#ffd700"
+        <meshStandardMaterial
+          color="#ffeaa0"
+          emissive="#ffd700"
+          emissiveIntensity={2.5}
+          metalness={0.95}
+          roughness={0.05}
           transparent
           opacity={1}
           toneMapped={false}
