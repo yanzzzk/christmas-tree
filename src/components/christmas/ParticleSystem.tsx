@@ -195,7 +195,7 @@ export function ParticleSystem({ state, particleCount = 7000 }: ParticleSystemPr
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, particleCount]} frustumCulled={false}>
       <sphereGeometry args={[1, 6, 6]} />
-      <meshBasicMaterial vertexColors toneMapped={false} />
+      <meshBasicMaterial color="#ffffff" toneMapped={false} />
     </instancedMesh>
   );
 }
