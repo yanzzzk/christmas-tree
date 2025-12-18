@@ -145,24 +145,23 @@ function PhotoCardMesh({
     if (!meshRef.current) return;
 
     const targetPos = isFocused 
-      ? [0, 0, 2]  // 稍微远一点，给动画更多空间
+      ? [0, 0, 0.8]  // 更近的位置
       : state === 'tree' 
         ? treePosition 
         : galaxyPosition;
 
-    const targetScale = isFocused ? 4 : 0.4;
+    const targetScale = isFocused ? 5 : 0.4;  // 更大的缩放
 
-    // 杀死之前的动画
+    // 使用更丝滑的动画设置
     gsap.killTweensOf(meshRef.current.position);
     gsap.killTweensOf(meshRef.current.scale);
 
-    // 更丝滑的动画 - 使用更长的时间和物理感的缓动
     gsap.to(meshRef.current.position, {
       x: targetPos[0],
       y: targetPos[1],
       z: targetPos[2],
-      duration: isFocused ? 1.2 : 1.0,  // 更长的持续时间
-      ease: isFocused ? 'power2.out' : 'power2.inOut',  // 更平滑的缓动
+      duration: isFocused ? 0.6 : 0.8,
+      ease: 'power3.out',  // 更自然的缓动
       overwrite: true,
     });
 
@@ -170,10 +169,9 @@ function PhotoCardMesh({
       x: targetScale,
       y: targetScale,
       z: 1,
-      duration: isFocused ? 1.0 : 0.8,
-      ease: isFocused ? 'elastic.out(0.8, 0.5)' : 'power2.inOut',  // 弹性效果更自然
+      duration: isFocused ? 0.5 : 0.7,
+      ease: 'back.out(1.2)',  // 带轻微弹性的缓动
       overwrite: true,
-      delay: isFocused ? 0.1 : 0,  // 稍微延迟缩放，让位置先动
     });
   }, [state, isFocused, treePosition, galaxyPosition]);
 
