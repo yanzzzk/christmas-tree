@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { ParticleSystem, OrnamentBalls, GemOrnaments, TetrahedronSpiral } from './ParticleSystem';
 import { PhotoCards } from './PhotoCards';
@@ -82,51 +82,39 @@ function SceneContent({
         Use enhanced lighting instead for reflections.
       */}
       
-      {/* Ambient lighting - subtle */}
-      <ambientLight intensity={0.15} />
+      {/* Ambient lighting */}
+      <ambientLight intensity={0.25} />
       
-      {/* Main spotlight from top */}
+      {/* Main spotlight - no shadows for performance */}
       <spotLight 
         position={[0, 12, 5]} 
         angle={0.5}
         penumbra={0.8}
         intensity={2}
         color="#fff8e8"
-        castShadow
       />
       
-      {/* Secondary spotlight */}
-      <spotLight 
-        position={[-5, 8, -3]} 
-        angle={0.4}
-        penumbra={0.6}
-        intensity={1.2}
-        color="#ffccaa"
-      />
+      {/* Single secondary light */}
+      <pointLight position={[0, -2, 0]} intensity={1.2} color="#ff6633" distance={12} />
       
-      {/* Bottom ground lights - simulating floor uplighting */}
-      <pointLight position={[0, -3, 0]} intensity={1.5} color="#ff6633" distance={10} />
-      <pointLight position={[-3, -2.5, 2]} intensity={0.8} color="#22ff66" distance={8} />
-      <pointLight position={[3, -2.5, -2]} intensity={0.8} color="#ff2244" distance={8} />
-      
-      {/* Background stars */}
+      {/* Background stars - reduced count */}
       <Stars 
         radius={100} 
         depth={50} 
-        count={5000} 
+        count={1500} 
         factor={4} 
         saturation={0.5} 
         fade 
-        speed={0.5}
+        speed={0.3}
       />
       
-      {/* Main particle system */}
-      <ParticleSystem state={state} particleCount={4000} />
+      {/* Main particle system - reduced count */}
+      <ParticleSystem state={state} particleCount={2500} />
       
-      {/* Colorful ornament balls (red, gold) */}
+      {/* Colorful ornament balls */}
       <OrnamentBalls state={state} />
       
-      {/* Gem ornaments (cubes & icosahedrons) */}
+      {/* Gem ornaments */}
       <GemOrnaments state={state} />
       
       {/* Tetrahedron spiral ribbon */}
@@ -142,17 +130,12 @@ function SceneContent({
       {/* Tree star topper */}
       <TreeStar state={state} />
       
-      {/* Post-processing effects - enhanced glow */}
-      <EffectComposer>
+      {/* Post-processing - lighter bloom */}
+      <EffectComposer multisampling={0}>
         <Bloom 
-          luminanceThreshold={0.85}
-          luminanceSmoothing={0.2}
-          intensity={1.5}
-          mipmapBlur
-        />
-        <Vignette
-          offset={0.2}
-          darkness={0.6}
+          luminanceThreshold={0.9}
+          luminanceSmoothing={0.3}
+          intensity={1.0}
         />
       </EffectComposer>
     </>
@@ -186,10 +169,13 @@ export function ChristmasScene({
   return (
     <Canvas
       camera={{ position: [0, 2, 12], fov: 60 }}
+      dpr={[1, 1.5]}
       gl={{ 
-        antialias: true,
+        antialias: false,
         alpha: false,
         powerPreference: 'high-performance',
+        stencil: false,
+        depth: true,
       }}
       style={{ background: 'linear-gradient(180deg, #0a1628 0%, #1a0a28 50%, #0a1628 100%)' }}
     >

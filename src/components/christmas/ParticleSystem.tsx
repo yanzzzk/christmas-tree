@@ -235,7 +235,7 @@ export function OrnamentBalls({ state }: { state: TreeState }) {
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const colorsSetRef = useRef(false);
   const transitionRef = useRef({ progress: 0 });
-  const ornamentCount = 35;
+  const ornamentCount = 20;
   
   const ornamentData = useMemo(() => {
     const colors = [
@@ -306,7 +306,7 @@ export function OrnamentBalls({ state }: { state: TreeState }) {
 
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, ornamentCount]}>
-      <sphereGeometry args={[1, 12, 12]} />
+      <sphereGeometry args={[1, 8, 8]} />
       <meshStandardMaterial 
         metalness={0.7} 
         roughness={0.15} 
@@ -326,8 +326,8 @@ export function GemOrnaments({ state }: { state: TreeState }) {
   const timeRef = useRef(0);
   const colorsSetRef = useRef({ cube: false, ico: false });
   const transitionRef = useRef({ progress: 0 });
-  const cubeCount = 25;
-  const icoCount = 20;
+  const cubeCount = 15;
+  const icoCount = 12;
   
   const cubeData = useMemo(() => {
     return Array.from({ length: cubeCount }, (_, i) => {
@@ -468,7 +468,7 @@ export function TetrahedronSpiral({ state }: { state: TreeState }) {
   const timeRef = useRef(0);
   const colorsSetRef = useRef(false);
   const transitionRef = useRef({ progress: 0 });
-  const tetraCount = 180;
+  const tetraCount = 100;
   const whiteColor = useMemo(() => new THREE.Color('#ffffff'), []);
   
   const tetraData = useMemo(() => {
