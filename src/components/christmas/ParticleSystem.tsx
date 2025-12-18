@@ -77,111 +77,131 @@ function generateRibbonPosition(index: number, total: number): [number, number, 
   ];
 }
 
-// Main tree particles (green sparkles/snow effect) - OPTIMIZED
-export function ParticleSystem({ state, particleCount = 4000 }: ParticleSystemProps) {
-  const meshRef = useRef<THREE.InstancedMesh>(null);
-  const dummy = useMemo(() => new THREE.Object3D(), []);
+// Main tree particles using Points (much more performant than InstancedMesh)
+export function ParticleSystem({ state, particleCount = 8000 }: ParticleSystemProps) {
+  const pointsRef = useRef<THREE.Points>(null);
   const timeRef = useRef(0);
-  const colorsSetRef = useRef(false);
-  const transitionRef = useRef({ progress: 0, fromState: 'tree' as TreeState });
+  const transitionRef = useRef({ progress: 0 });
   
-  const particleData = useMemo(() => {
-    return Array.from({ length: particleCount }, (_, i) => {
+  // Pre-generate all particle data
+  const { positions, colors, particleData } = useMemo(() => {
+    const posArray = new Float32Array(particleCount * 3);
+    const colorArray = new Float32Array(particleCount * 3);
+    const data: Array<{
+      treePosition: [number, number, number];
+      galaxyPosition: [number, number, number];
+      phase: number;
+      speed: number;
+      delay: number;
+    }> = [];
+    
+    for (let i = 0; i < particleCount; i++) {
       const treePos = generateTreePosition(i, particleCount);
       const galaxyPos = generateGalaxyPosition();
       
-      // 85% green for tree body, 15% white sparkles
+      // Initial position (tree)
+      posArray[i * 3] = treePos[0];
+      posArray[i * 3 + 1] = treePos[1];
+      posArray[i * 3 + 2] = treePos[2];
+      
+      // Colors - 85% green, 15% white
       const colorRand = Math.random();
-      let color: THREE.Color;
+      let r, g, b;
       
       if (colorRand < 0.85) {
+        // Green variations
         const hue = 0.33 + Math.random() * 0.05;
-        const saturation = 0.7 + Math.random() * 0.3;
-        const lightness = 0.25 + Math.random() * 0.2;
-        color = new THREE.Color().setHSL(hue, saturation, lightness);
+        const sat = 0.7 + Math.random() * 0.3;
+        const light = 0.3 + Math.random() * 0.25;
+        const color = new THREE.Color().setHSL(hue, sat, light);
+        r = color.r; g = color.g; b = color.b;
       } else {
-        color = new THREE.Color().setHSL(0, 0, 0.9 + Math.random() * 0.1);
+        // White sparkles
+        r = g = b = 0.9 + Math.random() * 0.1;
       }
       
-      return {
+      colorArray[i * 3] = r;
+      colorArray[i * 3 + 1] = g;
+      colorArray[i * 3 + 2] = b;
+      
+      data.push({
         treePosition: treePos,
         galaxyPosition: galaxyPos,
-        color,
-        scale: 0.015 + Math.random() * 0.025,
         phase: Math.random() * Math.PI * 2,
         speed: 0.5 + Math.random() * 0.5,
-        // Pre-calculated animation delay for staggered effect
         delay: Math.random(),
-      };
-    });
+      });
+    }
+    
+    return { positions: posArray, colors: colorArray, particleData: data };
   }, [particleCount]);
 
-  // Use single GSAP tween for overall transition instead of per-particle
+  // Single GSAP tween for transition
   useEffect(() => {
-    transitionRef.current.fromState = transitionRef.current.progress > 0.5 ? 'galaxy' : 'tree';
-    
     gsap.to(transitionRef.current, {
       progress: state === 'tree' ? 0 : 1,
-      duration: 1.8,
+      duration: 2.0,
       ease: 'power2.inOut',
     });
   }, [state]);
 
-  // Set colors once on mount
-  useEffect(() => {
-    if (!meshRef.current || colorsSetRef.current) return;
-    
-    particleData.forEach((particle, i) => {
-      meshRef.current!.setColorAt(i, particle.color);
-    });
-    if (meshRef.current.instanceColor) {
-      meshRef.current.instanceColor.needsUpdate = true;
-    }
-    colorsSetRef.current = true;
-  }, [particleData]);
-
   useFrame((_, delta) => {
-    if (!meshRef.current) return;
+    if (!pointsRef.current) return;
     
     timeRef.current += delta;
     const progress = transitionRef.current.progress;
+    const positionAttr = pointsRef.current.geometry.attributes.position as THREE.BufferAttribute;
+    const posArray = positionAttr.array as Float32Array;
     
-    // Process particles in batches for better performance
     for (let i = 0; i < particleCount; i++) {
-      const particle = particleData[i];
+      const p = particleData[i];
       
-      // Staggered lerp based on particle delay
-      const staggeredProgress = Math.max(0, Math.min(1, 
-        progress * 1.5 - particle.delay * 0.5
-      ));
-      const smoothProgress = staggeredProgress * staggeredProgress * (3 - 2 * staggeredProgress); // smoothstep
+      // Staggered smooth interpolation
+      const staggeredProgress = Math.max(0, Math.min(1, progress * 1.5 - p.delay * 0.5));
+      const smooth = staggeredProgress * staggeredProgress * (3 - 2 * staggeredProgress);
       
       // Interpolate position
-      const x = particle.treePosition[0] + (particle.galaxyPosition[0] - particle.treePosition[0]) * smoothProgress;
-      const y = particle.treePosition[1] + (particle.galaxyPosition[1] - particle.treePosition[1]) * smoothProgress;
-      const z = particle.treePosition[2] + (particle.galaxyPosition[2] - particle.treePosition[2]) * smoothProgress;
+      const x = p.treePosition[0] + (p.galaxyPosition[0] - p.treePosition[0]) * smooth;
+      const y = p.treePosition[1] + (p.galaxyPosition[1] - p.treePosition[1]) * smooth;
+      const z = p.treePosition[2] + (p.galaxyPosition[2] - p.treePosition[2]) * smooth;
       
-      // Subtle breathing animation
-      const breathe = Math.sin(timeRef.current * particle.speed + particle.phase) * 0.02;
+      // Add subtle breathing animation
+      const breathe = Math.sin(timeRef.current * p.speed + p.phase) * 0.015;
       
-      dummy.position.set(x, y + breathe, z);
-      dummy.rotation.y = timeRef.current * 0.3 + particle.phase;
-      
-      const scalePulse = 1 + Math.sin(timeRef.current * 2 + particle.phase) * 0.1;
-      dummy.scale.setScalar(particle.scale * scalePulse);
-      
-      dummy.updateMatrix();
-      meshRef.current.setMatrixAt(i, dummy.matrix);
+      posArray[i * 3] = x;
+      posArray[i * 3 + 1] = y + breathe;
+      posArray[i * 3 + 2] = z;
     }
     
-    meshRef.current.instanceMatrix.needsUpdate = true;
+    positionAttr.needsUpdate = true;
   });
 
   return (
-    <instancedMesh ref={meshRef} args={[undefined, undefined, particleCount]}>
-      <sphereGeometry args={[1, 4, 4]} />
-      <meshBasicMaterial toneMapped={false} />
-    </instancedMesh>
+    <points ref={pointsRef}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={particleCount}
+          array={positions}
+          itemSize={3}
+        />
+        <bufferAttribute
+          attach="attributes-color"
+          count={particleCount}
+          array={colors}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.06}
+        vertexColors
+        transparent
+        opacity={0.9}
+        sizeAttenuation
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </points>
   );
 }
 
