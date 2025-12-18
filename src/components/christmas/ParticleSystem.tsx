@@ -134,20 +134,38 @@ export function ParticleSystem({ state, particleCount = 8000 }: ParticleSystemPr
     return { positions, colors, particleData: data };
   }, [particleCount]);
 
+  // Track if transition is active
+  const isTransitioningRef = useRef(false);
+  const lastProgressRef = useRef(0);
+
   // Single GSAP tween for transition
   useEffect(() => {
+    isTransitioningRef.current = true;
     gsap.to(transitionRef.current, {
       progress: state === 'tree' ? 0 : 1,
       duration: 1.8,
       ease: 'power2.inOut',
+      onComplete: () => {
+        isTransitioningRef.current = false;
+      },
     });
   }, [state]);
 
   useFrame((_, delta) => {
     if (!pointsRef.current) return;
     
-    timeRef.current += delta;
     const progress = transitionRef.current.progress;
+    
+    // Skip heavy computation if not transitioning and progress hasn't changed
+    // Only update every 3rd frame for breathing animation when idle
+    const isIdle = !isTransitioningRef.current && Math.abs(progress - lastProgressRef.current) < 0.001;
+    lastProgressRef.current = progress;
+    
+    timeRef.current += delta;
+    
+    // When idle, only update breathing animation every few frames
+    if (isIdle && Math.floor(timeRef.current * 30) % 3 !== 0) return;
+    
     const positionAttr = pointsRef.current.geometry.attributes.position as THREE.BufferAttribute;
     const posArray = positionAttr.array as Float32Array;
     
@@ -163,7 +181,7 @@ export function ParticleSystem({ state, particleCount = 8000 }: ParticleSystemPr
       const y = p.treePos[1] + (p.galaxyPos[1] - p.treePos[1]) * smooth;
       const z = p.treePos[2] + (p.galaxyPos[2] - p.treePos[2]) * smooth;
       
-      // Subtle breathing
+      // Subtle breathing - only when idle for performance
       const breathe = Math.sin(timeRef.current * p.speed + p.phase) * 0.02;
       
       posArray[i * 3] = x;
@@ -240,11 +258,16 @@ export function OrnamentBalls({ state }: { state: TreeState }) {
     }));
   }, []);
 
+  const isTransitioningRef = useRef(false);
+  const lastProgressRef = useRef(0);
+
   useEffect(() => {
+    isTransitioningRef.current = true;
     gsap.to(transitionRef.current, {
       progress: state === 'tree' ? 0 : 1,
       duration: 1.5,
       ease: 'power2.inOut',
+      onComplete: () => { isTransitioningRef.current = false; },
     });
   }, [state]);
 
@@ -259,6 +282,10 @@ export function OrnamentBalls({ state }: { state: TreeState }) {
     if (!meshRef.current) return;
     
     const progress = transitionRef.current.progress;
+    
+    // Skip if idle
+    if (!isTransitioningRef.current && Math.abs(progress - lastProgressRef.current) < 0.001) return;
+    lastProgressRef.current = progress;
     
     ornamentData.forEach((ornament, i) => {
       const p = Math.max(0, Math.min(1, progress * 1.3 - ornament.delay * 0.3));
@@ -330,8 +357,18 @@ export function GemOrnaments({ state }: { state: TreeState }) {
     });
   }, []);
 
+  const isTransitioningRef = useRef(false);
+  const lastProgressRef = useRef(0);
+  const frameCountRef = useRef(0);
+
   useEffect(() => {
-    gsap.to(transitionRef.current, { progress: state === 'tree' ? 0 : 1, duration: 1.5, ease: 'power2.inOut' });
+    isTransitioningRef.current = true;
+    gsap.to(transitionRef.current, { 
+      progress: state === 'tree' ? 0 : 1, 
+      duration: 1.5, 
+      ease: 'power2.inOut',
+      onComplete: () => { isTransitioningRef.current = false; },
+    });
   }, [state]);
 
   // Set colors once
@@ -350,7 +387,14 @@ export function GemOrnaments({ state }: { state: TreeState }) {
 
   useFrame((_, delta) => {
     timeRef.current += delta;
+    frameCountRef.current++;
+    
     const progress = transitionRef.current.progress;
+    const isIdle = !isTransitioningRef.current && Math.abs(progress - lastProgressRef.current) < 0.001;
+    lastProgressRef.current = progress;
+    
+    // When idle, only update rotation every 2nd frame
+    if (isIdle && frameCountRef.current % 2 !== 0) return;
     
     if (cubeRef.current) {
       cubeData.forEach((cube, i) => {
@@ -445,8 +489,18 @@ export function TetrahedronSpiral({ state }: { state: TreeState }) {
     });
   }, []);
 
+  const isTransitioningRef = useRef(false);
+  const lastProgressRef = useRef(0);
+  const frameCountRef = useRef(0);
+
   useEffect(() => {
-    gsap.to(transitionRef.current, { progress: state === 'tree' ? 0 : 1, duration: 1.5, ease: 'power2.inOut' });
+    isTransitioningRef.current = true;
+    gsap.to(transitionRef.current, { 
+      progress: state === 'tree' ? 0 : 1, 
+      duration: 1.5, 
+      ease: 'power2.inOut',
+      onComplete: () => { isTransitioningRef.current = false; },
+    });
   }, [state]);
 
   // Set colors once
@@ -461,7 +515,14 @@ export function TetrahedronSpiral({ state }: { state: TreeState }) {
     if (!meshRef.current) return;
     
     timeRef.current += delta;
+    frameCountRef.current++;
+    
     const progress = transitionRef.current.progress;
+    const isIdle = !isTransitioningRef.current && Math.abs(progress - lastProgressRef.current) < 0.001;
+    lastProgressRef.current = progress;
+    
+    // When idle, only update rotation every 2nd frame
+    if (isIdle && frameCountRef.current % 2 !== 0) return;
     
     tetraData.forEach((tetra, i) => {
       // Wave effect: particles at top transition earlier
