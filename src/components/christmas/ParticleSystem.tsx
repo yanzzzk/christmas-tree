@@ -398,7 +398,7 @@ export function GemOrnaments({ state }: { state: TreeState }) {
         <meshStandardMaterial 
           color="#ffffff"
           emissive="#e8e8f0"
-          emissiveIntensity={0.8}
+          emissiveIntensity={1}
           metalness={0.95} 
           roughness={0.05}
         />
@@ -408,7 +408,7 @@ export function GemOrnaments({ state }: { state: TreeState }) {
         <meshStandardMaterial 
           color="#ffffff"
           emissive="#e8e8f0"
-          emissiveIntensity={0.8}
+          emissiveIntensity={1}
           metalness={0.95} 
           roughness={0.05}
         />
