@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
@@ -14,16 +14,19 @@ interface SceneContentProps {
   focusedPhotoIndex: number | null;
   orbitRotation: { x: number; y: number };
   handPosition: { x: number; y: number } | null;
+  onStarFocusChange?: (focused: boolean) => void;
 }
 
 function CameraController({ 
   state, 
   orbitRotation,
   handPosition,
+  onStarFocused,
 }: { 
   state: TreeState;
   orbitRotation: { x: number; y: number };
   handPosition: { x: number; y: number } | null;
+  onStarFocused?: (focused: boolean) => void;
 }) {
   const { camera } = useThree();
   const targetRef = useRef(new THREE.Vector3(0, 0, 0));
@@ -31,6 +34,7 @@ function CameraController({
   const ribbonTimeRef = useRef(0);
   const prevStateRef = useRef<TreeState>(state);
   const transitionDelayRef = useRef(0);
+  const isAtStarRef = useRef(false);
 
   useFrame((_, delta) => {
     // Detect state change to tree (pinch gesture completed)
@@ -38,6 +42,14 @@ function CameraController({
       // Wait for tree to assemble before starting ribbon follow
       transitionDelayRef.current = 2.0; // 2 second delay for assembly
       ribbonTimeRef.current = 0;
+      isAtStarRef.current = false;
+      onStarFocused?.(false);
+    }
+    
+    // Reset when leaving tree state
+    if (state !== 'tree' && prevStateRef.current === 'tree') {
+      isAtStarRef.current = false;
+      onStarFocused?.(false);
     }
     prevStateRef.current = state;
 
@@ -55,27 +67,42 @@ function CameraController({
     let lookAtY = 0;
     
     if (state === 'tree' && transitionDelayRef.current <= 0) {
-      // Ribbon follow mode - camera spirals from bottom to top following the ribbon
-      ribbonTimeRef.current += delta * 0.15; // Speed of spiral
-      
-      // Loop the ribbon time (0 to 1 represents bottom to top)
-      const t = (ribbonTimeRef.current % 1);
-      
-      // Match ribbon spiral parameters from TetrahedronSpiral
-      const height = 7;
-      const maxRadius = 3.0;
-      const ribbonY = t * height - height / 2 + 0.3;
-      const layerRadius = maxRadius * (1 - t * 0.88) + 0.15;
-      const angle = t * Math.PI * 6; // 3 full spirals
-      
-      // Position camera outside the ribbon, looking at the ribbon point
-      const cameraDistance = 5 + layerRadius * 1.5;
-      const cameraAngle = angle + Math.PI * 0.3; // Slightly ahead of ribbon
-      
-      targetX = Math.cos(cameraAngle) * cameraDistance;
-      targetY = ribbonY + 1.5; // Slightly above the ribbon point
-      targetZ = Math.sin(cameraAngle) * cameraDistance;
-      lookAtY = ribbonY;
+      if (!isAtStarRef.current) {
+        // Ribbon follow mode - camera spirals from bottom to top following the ribbon
+        ribbonTimeRef.current += delta * 0.15; // Speed of spiral
+        
+        // Check if reached the top (t >= 1)
+        if (ribbonTimeRef.current >= 1) {
+          isAtStarRef.current = true;
+          onStarFocused?.(true);
+          ribbonTimeRef.current = 1;
+        }
+        
+        const t = Math.min(ribbonTimeRef.current, 1);
+        
+        // Match ribbon spiral parameters from TetrahedronSpiral
+        const height = 7;
+        const maxRadius = 3.0;
+        const ribbonY = t * height - height / 2 + 0.3;
+        const layerRadius = maxRadius * (1 - t * 0.88) + 0.15;
+        const angle = t * Math.PI * 6; // 3 full spirals
+        
+        // Position camera outside the ribbon, looking at the ribbon point
+        const cameraDistance = 5 + layerRadius * 1.5;
+        const cameraAngle = angle + Math.PI * 0.3; // Slightly ahead of ribbon
+        
+        targetX = Math.cos(cameraAngle) * cameraDistance;
+        targetY = ribbonY + 1.5; // Slightly above the ribbon point
+        targetZ = Math.sin(cameraAngle) * cameraDistance;
+        lookAtY = ribbonY;
+      } else {
+        // Focused on star - stay looking at the tree top
+        const starY = 4.4;
+        targetX = 0;
+        targetY = starY + 1;
+        targetZ = 6;
+        lookAtY = starY;
+      }
     } else if (handPosition && state === 'galaxy') {
       targetX = (handPosition.x - 0.5) * 20;
       targetY = (0.5 - handPosition.y) * 10 + 2;
@@ -109,13 +136,22 @@ function SceneContent({
   focusedPhotoIndex,
   orbitRotation,
   handPosition,
+  onStarFocusChange,
 }: SceneContentProps) {
+  const [isStarFocused, setIsStarFocused] = useState(false);
+
+  const handleStarFocused = (focused: boolean) => {
+    setIsStarFocused(focused);
+    onStarFocusChange?.(focused);
+  };
+
   return (
     <>
       <CameraController 
         state={state} 
         orbitRotation={orbitRotation}
         handPosition={handPosition}
+        onStarFocused={handleStarFocused}
       />
       
       {/* 
@@ -169,7 +205,7 @@ function SceneContent({
       />
       
       {/* Tree star topper */}
-      <TreeStar state={state} />
+      <TreeStar state={state} isFocused={isStarFocused} />
       
       {/* Post-processing effects - enhanced glow */}
       <EffectComposer>
