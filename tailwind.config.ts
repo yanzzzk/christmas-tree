@@ -94,8 +94,7 @@ export default {
         "pulse-slow": "pulse-slow 3s ease-in-out infinite",
       },
       fontFamily: {
-        display: ["Cinzel", "Times New Roman", "serif"],
-        serif: ["Times New Roman", "Georgia", "serif"],
+        display: ["Playfair Display", "serif"],
         sans: ["Inter", "system-ui", "sans-serif"],
       },
     },

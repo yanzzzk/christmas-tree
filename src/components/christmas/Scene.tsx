@@ -82,23 +82,20 @@ function SceneContent({
         Use enhanced lighting instead for reflections.
       */}
       
-      {/* Luxury lighting - Deep emerald + gold ambiance */}
-      <ambientLight intensity={0.15} color="#0a3020" />
+      {/* Simplified lighting - fewer point lights for better performance */}
+      <ambientLight intensity={0.2} />
       
-      {/* Main golden spotlight for luxury feel */}
+      {/* Single main spotlight */}
       <spotLight 
-        position={[0, 15, 8]} 
-        angle={0.5}
-        penumbra={0.9}
-        intensity={3.5}
-        color="#ffd700"
+        position={[0, 12, 5]} 
+        angle={0.6}
+        penumbra={0.8}
+        intensity={2.5}
+        color="#fff8e8"
       />
       
-      {/* Secondary emerald accent light */}
-      <pointLight position={[5, 3, 5]} intensity={1.5} color="#0d5c3a" distance={15} />
-      
-      {/* Gold rim light for cinematic effect */}
-      <pointLight position={[-5, 0, -5]} intensity={1.8} color="#daa520" distance={18} />
+      {/* Single colored accent light */}
+      <pointLight position={[0, -2, 0]} intensity={1.2} color="#ff6633" distance={12} />
       
       {/* Background stars - reduced count for performance */}
       <Stars 
@@ -133,18 +130,17 @@ function SceneContent({
       {/* Tree star topper */}
       <TreeStar state={state} />
       
-      {/* Post-processing effects - Cinematic Trump-style luxury glow */}
+      {/* Post-processing effects - enhanced glow */}
       <EffectComposer>
         <Bloom 
-          luminanceThreshold={0.6}
-          luminanceSmoothing={0.4}
-          intensity={2.5}
+          luminanceThreshold={0.85}
+          luminanceSmoothing={0.2}
+          intensity={1.5}
           mipmapBlur
-          radius={0.85}
         />
         <Vignette
-          offset={0.15}
-          darkness={0.7}
+          offset={0.2}
+          darkness={0.6}
         />
       </EffectComposer>
     </>
@@ -186,10 +182,10 @@ export function ChristmasScene({
         depth: true,
       }}
       dpr={[1, 1.5]}
-      style={{ background: 'linear-gradient(180deg, #041a12 0%, #0a2818 50%, #041a12 100%)' }}
+      style={{ background: 'linear-gradient(180deg, #0a1628 0%, #1a0a28 50%, #0a1628 100%)' }}
     >
-      <color attach="background" args={['#041a12']} />
-      <fog attach="fog" args={['#041a12', 18, 40]} />
+      <color attach="background" args={['#0a1628']} />
+      <fog attach="fog" args={['#0a1628', 15, 35]} />
       
       <SceneContent 
         state={state}
