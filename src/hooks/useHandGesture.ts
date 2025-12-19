@@ -36,15 +36,21 @@ export function useHandGesture({ enabled, onGestureChange }: UseHandGestureOptio
     if (!landmarks || landmarks.length < 21) return 'none';
 
     const thumbTip = landmarks[4];
+    const thumbIp = landmarks[3];
+    const thumbMcp = landmarks[2];
     const indexTip = landmarks[8];
-    const middleTip = landmarks[12];
-    const ringTip = landmarks[16];
-    const pinkyTip = landmarks[20];
-    
+    const indexPip = landmarks[6];
     const indexMcp = landmarks[5];
+    const middleTip = landmarks[12];
+    const middlePip = landmarks[10];
     const middleMcp = landmarks[9];
+    const ringTip = landmarks[16];
+    const ringPip = landmarks[14];
     const ringMcp = landmarks[13];
+    const pinkyTip = landmarks[20];
+    const pinkyPip = landmarks[18];
     const pinkyMcp = landmarks[17];
+    const wrist = landmarks[0];
 
     // Check pinch (thumb to index distance)
     const pinchDist = calculateFingerDistance(landmarks, 4, 8);
@@ -52,17 +58,36 @@ export function useHandGesture({ enabled, onGestureChange }: UseHandGestureOptio
       return 'pinch';
     }
 
-    // Check if fingers are extended
-    const indexExtended = indexTip.y < indexMcp.y;
-    const middleExtended = middleTip.y < middleMcp.y;
-    const ringExtended = ringTip.y < ringMcp.y;
-    const pinkyExtended = pinkyTip.y < pinkyMcp.y;
+    // More robust finger curl detection - check if tip is below PIP joint (curled)
+    const isIndexCurled = indexTip.y > indexPip.y && indexTip.y > indexMcp.y - 0.02;
+    const isMiddleCurled = middleTip.y > middlePip.y && middleTip.y > middleMcp.y - 0.02;
+    const isRingCurled = ringTip.y > ringPip.y && ringTip.y > ringMcp.y - 0.02;
+    const isPinkyCurled = pinkyTip.y > pinkyPip.y && pinkyTip.y > pinkyMcp.y - 0.02;
+    
+    // Thumb curl - check if thumb tip is close to palm or below thumb IP
+    const thumbToPalm = calculateFingerDistance(landmarks, 4, 9); // thumb tip to middle MCP
+    const isThumbCurled = thumbToPalm < 0.12 || thumbTip.x > thumbIp.x; // Curled towards palm
+
+    const curledCount = [isIndexCurled, isMiddleCurled, isRingCurled, isPinkyCurled].filter(Boolean).length;
+
+    // Fist: at least 3 fingers curled and thumb also curled/tucked
+    if (curledCount >= 3 && isThumbCurled) {
+      return 'fist';
+    }
+
+    // Check if fingers are extended (tip above MCP with some margin)
+    const indexExtended = indexTip.y < indexMcp.y - 0.03;
+    const middleExtended = middleTip.y < middleMcp.y - 0.03;
+    const ringExtended = ringTip.y < ringMcp.y - 0.03;
+    const pinkyExtended = pinkyTip.y < pinkyMcp.y - 0.03;
 
     const extendedCount = [indexExtended, middleExtended, ringExtended, pinkyExtended].filter(Boolean).length;
 
     if (extendedCount >= 3) return 'open';
-    if (extendedCount <= 1) return 'fist';
     if (indexExtended && !middleExtended && !ringExtended && !pinkyExtended) return 'pointing';
+
+    // Fallback fist detection - if most fingers curled
+    if (curledCount >= 3) return 'fist';
 
     return 'none';
   }, [calculateFingerDistance]);
