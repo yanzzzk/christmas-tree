@@ -70,7 +70,7 @@ function CameraController({
     if (state === 'tree' && transitionDelayRef.current <= 0) {
       if (!isAtStarRef.current) {
         // Ribbon follow mode - camera spirals from bottom to top following the ribbon
-        ribbonTimeRef.current += delta * 0.12; // Base speed
+        ribbonTimeRef.current += delta * 0.15; // Speed of spiral
         
         // Check if reached the top (t >= 1)
         if (ribbonTimeRef.current >= 1) {
@@ -79,13 +79,7 @@ function CameraController({
           ribbonTimeRef.current = 1;
         }
         
-        const rawT = Math.min(ribbonTimeRef.current, 1);
-        
-        // Apply smooth easing curve for physics-like feel
-        // Ease-in-out cubic: slow start, fast middle, slow end
-        const t = rawT < 0.5 
-          ? 4 * rawT * rawT * rawT 
-          : 1 - Math.pow(-2 * rawT + 2, 3) / 2;
+        const t = Math.min(ribbonTimeRef.current, 1);
         
         // Match ribbon spiral parameters from TetrahedronSpiral
         const height = 7;
